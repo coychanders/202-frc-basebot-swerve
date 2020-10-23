@@ -1,15 +1,15 @@
 single_state:
 
-# ------ Example ------
+# ------ Drivetrain ------
 
-  st_example:
-    behavior: bh_example
+  st_drivetrain_zero:
+    behavior: bh_drivetrain_zero
     behavior_config:
-      config_key: 1000
+      timeout_time: 1000
+      zeroing_threshold: 0.1
 
-  st_example_default:
-    behavior: bh_example
-    behavior_config:
+  st_drivetrain_swerve:
+    behavior: bh_drivetrain_swerve
 
 
 done_for_time_state:

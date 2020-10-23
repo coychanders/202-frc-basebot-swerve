@@ -3,29 +3,27 @@ general:
   #  initial_teleop_mode: manual_mode
 
   states:
-
     sequences:
       priority_level_1: []
     parallels:
        priority_level_1: []
-    ss_example:
+    ss_drivetrain:
       priority_level_2: []
-      priority_level_1: [st_example]
-      default: [st_example_default]
+      priority_level_1: [st_drivetrain_zero]
+      default: [st_drivetrain_swerve]
 
+  subsystems: [ss_drivetrain]
 
-  subsystems: [ss_example]
+  input_booleans: [ipb_driver_start]
 
-  input_booleans: [ipb_operator_right_trigger, ipb_operator_left_trigger]
+  input_numerics: [ipn_driver_left_y, ipn_driver_left_x, ipn_driver_right_y, ipn_driver_right_x,
+                   ipn_drivetrain_front_right_angle, ipn_drivetrain_front_left_angle, ipn_drivetrain_back_left_angle, ipn_drivetrain_back_right_angle]
 
-  input_numerics: []
+  input_vectors: [ipv_swerve_odometry, ipv_navx]
 
-  input_vectors: []
+  output_numerics: [opn_drivetrain_front_right_speed, opn_drivetrain_front_left_speed, opn_drivetrain_back_left_speed, opn_drivetrain_back_right_speed, opn_drivetrain_front_right_angle, opn_drivetrain_front_left_angle, opn_drivetrain_back_left_angle, opn_drivetrain_back_right_angle]
 
-  output_numerics: []
-
-  output_booleans: [opb_example]
-
+  output_booleans: []
 
 global_timing:
   frame_time_threshold_input_service: 80
@@ -36,8 +34,14 @@ global_timing:
   frame_cycle_time_threshold_core_thread: 80
   frame_cycle_time_threshold_info_thread: 80
 
-global_example:
-  what_this_button_does: ipb_operator_left_trigger
+global_drivetrain:
+  x_left_js: ipn_driver_left_x
+  y_left_js: ipn_driver_left_y
+  x_right_js: ipn_driver_right_x
+  y_right_js: ipn_driver_right_y
+  robot_length: 36.0
+  robot_width: 24.0
+  navx: ipv_navx
 
 log:
 #  ips_selected_auto: true
