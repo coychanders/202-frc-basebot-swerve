@@ -3,23 +3,29 @@ controller_axis:
     port: 0
     axis: 1
     deadband: 0.15
+    scale: 1.0
     inverted: true
 
   ipn_driver_left_x:
     port: 0
     axis: 2
-    scale: 0.25
+    deadband: 0.15
+    scale: 1.0
+    inverted: true
 
   ipn_driver_right_y:
     port: 0
     axis: 5
-    scale: 0.01
+    deadband: 0.15
+    scale: 1.0
+    inverted: true
 
   ipn_driver_right_x:
     port: 0
     axis: 4
     deadband: 0.15
-    scale: 0.5
+    scale: 1.0
+    inverted: true
 
   #Do not scale this axis here (it is being used in multiple places)
   ipn_operator_left_y:

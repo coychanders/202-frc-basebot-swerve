@@ -8,8 +8,14 @@ single_state:
       timeout_time: 1000
       zeroing_threshold: 0.1
 
-  st_drivetrain_swerve:
-    behavior: bh_drivetrain_swerve
+  st_drivetrain_swerve_vector:
+    behavior: bh_drivetrain_swerve_vector
+
+  st_drivetrain_swerve_math:
+    behavior: bh_drivetrain_swerve_math
+
+  st_drivetrain_swerve_matthew:
+    behavior: bh_drivetrain_swerve_vector
 
 
 done_for_time_state:

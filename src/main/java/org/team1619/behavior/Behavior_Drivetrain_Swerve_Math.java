@@ -7,7 +7,6 @@ import org.uacr.shared.abstractions.RobotConfiguration;
 import org.uacr.utilities.Config;
 import org.uacr.utilities.logging.LogManager;
 import org.uacr.utilities.logging.Logger;
-import org.uacr.utilities.Timer;
 
 import java.util.*;
 
@@ -15,9 +14,9 @@ import java.util.*;
  * Example behavior to copy for other behaviors
  */
 
-public class Behavior_Drivetrain_Swerve implements Behavior {
+public class Behavior_Drivetrain_Swerve_Math implements Behavior {
 
-	private static final Logger sLogger = LogManager.getLogger(Behavior_Drivetrain_Swerve.class);
+	private static final Logger sLogger = LogManager.getLogger(Behavior_Drivetrain_Swerve_Math.class);
 	private static final Set<String> sSubsystems = Set.of("ss_drivetrain");
 
 	private final InputValues fSharedInputValues;
@@ -34,20 +33,21 @@ public class Behavior_Drivetrain_Swerve implements Behavior {
 	private final String fNavx;
 	private Map<String, Double> fNavxValues = new HashMap<>();
 
-	public Behavior_Drivetrain_Swerve(InputValues inputValues, OutputValues outputValues, Config config, RobotConfiguration robotConfiguration) {
+	public Behavior_Drivetrain_Swerve_Math(InputValues inputValues, OutputValues outputValues, Config config, RobotConfiguration robotConfiguration) {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
 
-		fXAxis_left_js = robotConfiguration.getString("global_drivetrain", "x_left_js");
-		fYAxis_left_js = robotConfiguration.getString("global_drivetrain", "y_left_js");
-		fXAxis_right_js = robotConfiguration.getString("global_drivetrain", "x_right_js");
-		fYAxis_right_js = robotConfiguration.getString("global_drivetrain", "y_right_js");
+		fXAxis_left_js = robotConfiguration.getString("global_drivetrain_swerve_math", "x_left_js");
+		fYAxis_left_js = robotConfiguration.getString("global_drivetrain_swerve_math", "y_left_js");
+		fXAxis_right_js = robotConfiguration.getString("global_drivetrain_swerve_math", "x_right_js");
+		fYAxis_right_js = robotConfiguration.getString("global_drivetrain_swerve_math", "y_right_js");
 
-		fRobotLength = robotConfiguration.getDouble("global_drivetrain", "robot_length");
-		fRobotWidth = robotConfiguration.getDouble("global_drivetrain", "robot_width");
+		fRobotLength = robotConfiguration.getDouble("global_drivetrain_swerve_math", "robot_length");
+		fRobotWidth = robotConfiguration.getDouble("global_drivetrain_swerve_math", "robot_width");
 		fDiameter = Math.sqrt ((fRobotLength * fRobotLength) + (fRobotWidth * fRobotWidth));
 
-		fNavx = robotConfiguration.getString("global_drivetrain", "navx");
+		fNavx = robotConfiguration.getString("global_drivetrain_swerve_math", "navx");
+		fSharedInputValues.setBoolean("ipb_swerve_field_centric", true);
 	}
 
 	@Override
@@ -65,9 +65,9 @@ public class Behavior_Drivetrain_Swerve implements Behavior {
 
 		// Define forward, strafe, point and rotate
 		double forward = leftJs_yAxis;
-		double strafe = -1 * leftJs_xAxis;
-		double point = rightJs_yAxis;
-		double rotate = -1 * rightJs_xAxis;
+		double strafe = leftJs_xAxis;
+//		double point = rightJs_yAxis;
+		double rotate = rightJs_xAxis;
 
 		// Get heading from the Navx
 		fNavxValues = fSharedInputValues.getVector(fNavx);

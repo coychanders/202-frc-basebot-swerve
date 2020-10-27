@@ -8,13 +8,13 @@ general:
     parallels:
        priority_level_1: []
     ss_drivetrain:
-      priority_level_2: []
-      priority_level_1: [st_drivetrain_zero]
-      default: [st_drivetrain_swerve]
+      priority_level_2: [st_drivetrain_zero]
+      priority_level_1: [st_drivetrain_swerve_vector, st_drivetrain_swerve_math, st_drivetrain_swerve_matthew]
+      default: []
 
   subsystems: [ss_drivetrain]
 
-  input_booleans: [ipb_driver_start]
+  input_booleans: [ipb_driver_back, ipb_driver_start, ipb_driver_a, ipb_driver_left_stick_button, ipb_driver_right_stick_button]
 
   input_numerics: [ipn_driver_left_y, ipn_driver_left_x, ipn_driver_right_y, ipn_driver_right_x,
                    ipn_drivetrain_front_right_angle, ipn_drivetrain_front_left_angle, ipn_drivetrain_back_left_angle, ipn_drivetrain_back_right_angle]
@@ -34,7 +34,7 @@ global_timing:
   frame_cycle_time_threshold_core_thread: 80
   frame_cycle_time_threshold_info_thread: 80
 
-global_drivetrain:
+global_drivetrain_swerve_math:
   x_left_js: ipn_driver_left_x
   y_left_js: ipn_driver_left_y
   x_right_js: ipn_driver_right_x
@@ -42,6 +42,28 @@ global_drivetrain:
   robot_length: 36.0
   robot_width: 24.0
   navx: ipv_navx
+
+global_drivetrain_swerve_vector:
+  swerve_x: ipn_driver_left_x
+  swerve_y: ipn_driver_left_y
+  swerve_rotate: ipn_driver_right_x
+  swerve_field_oriented_button: ipb_driver_right_stick_button
+  navx: ipv_navx
+  swerve_front_right_module_position: [ 30.0, -20.0 ]
+  swerve_front_left_module_position: [ 30.0, 20.0 ]
+  swerve_back_left_module_position: [ -30.0, 20.0 ]
+  swerve_back_right_module_position: [ -30.0, -20.0 ]
+
+global_drivetrain_Matthew:
+  swerve_front_right_module_position: [ 30.0, -20.0 ]
+  swerve_front_left_module_position: [ 30.0, 20.0 ]
+  swerve_back_left_module_position: [ -30.0, 20.0 ]
+  swerve_back_right_module_position: [ -30.0, -20.0 ]
+  swerve_x: ipn_driver_left_x
+  swerve_y: ipn_driver_left_y
+  swerve_rotate: ipn_driver_right_x
+  swerve_field_oriented_button: ipb_driver_right_stick_button
+
 
 log:
 #  ips_selected_auto: true
