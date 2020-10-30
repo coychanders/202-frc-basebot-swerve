@@ -15,7 +15,7 @@ single_state:
     behavior: bh_drivetrain_swerve_math
 
   st_drivetrain_swerve_matthew:
-    behavior: bh_drivetrain_swerve_vector
+    behavior: bh_drivetrain_swerve_matthew
 
 
 done_for_time_state:

@@ -32,7 +32,10 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 	private final VectorList fModuleRotationDirections;
 	private final VectorList fCurrentModuleVectors;
 
-	private final List<String> fModuleAngleInputNames;
+	private final List<String> fModuleInputAngleNames;
+	private final List<String> fModuleInputSpeedNames;
+	private final List<String> fModuleOutputAngleNames;
+	private final List<String> fModuleOutputSpeedNames;
 
 	private final String fXAxis;
 	private final String fYAxis;
@@ -47,22 +50,46 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
 
-		fModulePositions = new VectorList(new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_front_right_module_position")),
-				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_front_left_module_position")),
-				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_back_left_module_position")),
-				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_back_right_module_position")));
+		// Read in the location of the four swerve modules relative to the center of the robot based on standard x,y grid
+		fModulePositions = new VectorList(new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_front_right_module_position")),
+				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_front_left_module_position")),
+				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_left_module_position")),
+				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_right_module_position")));
 
+		// ??? Rotate 90 degrees as the zero on the field is 90 degrees counterclockwise from zero on a unit circle
 		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
 
 		fCurrentModuleVectors = new VectorList(new Vector(), new Vector(), new Vector(), new Vector());
 
-		fModuleAngleInputNames = Lists.of("ipn_drivetrain_front_right_angle", "ipn_drivetrain_front_left_angle",
-				"ipn_drivetrain_back_left_angle", "ipn_drivetrain_back_right_angle");
+		fModuleInputAngleNames = Lists.of(
+				"ipn_drivetrain_front_right_angle",
+						"ipn_drivetrain_front_left_angle",
+						"ipn_drivetrain_back_left_angle",
+						"ipn_drivetrain_back_right_angle");
 
-		fXAxis = robotConfiguration.getString("global_drivetrain_Matthew", "swerve_x");
-		fYAxis = robotConfiguration.getString("global_drivetrain_Matthew", "swerve_y");
-		fRotateAxis = robotConfiguration.getString("global_drivetrain_Matthew", "swerve_rotate");
-		fFieldOrientedButton = robotConfiguration.getString("global_drivetrain_Matthew", "swerve_field_oriented_button");
+		fModuleInputSpeedNames = Lists.of(
+				"ipn_drivetrain_front_right_speed",
+						"ipn_drivetrain_front_left_speed",
+						"ipn_drivetrain_back_left_speed",
+						"ipn_drivetrain_back_right_speed");
+
+		fModuleOutputAngleNames = Lists.of(
+				"opn_drivetrain_front_right_angle",
+						"opn_drivetrain_front_left_angle",
+						"opn_drivetrain_back_left_angle",
+						"opn_drivetrain_back_right_angle");
+
+		fModuleOutputSpeedNames = Lists.of(
+				"opn_drivetrain_front_right_speed",
+						"opn_drivetrain_front_left_speed",
+						"opn_drivetrain_back_left_speed",
+						"opn_drivetrain_back_right_speed");
+
+
+		fXAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_x");
+		fYAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_y");
+		fRotateAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_rotate");
+		fFieldOrientedButton = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_field_oriented_button");
 
 		mStateName = "Unknown";
 
@@ -80,43 +107,64 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 	@Override
 	public void update() {
-		if(fSharedInputValues.getBoolean("ipb_driver_a")) {
-			Vector centerOfRotation = new Vector(new Point(60.0, 0.0));
-			double rotationSpeed = 1.0;
-			Vector translation = new Vector(new Point(0.0, 0.0));
-
-			VectorList moduleRotationVectors = fModulePositions.copy().subtractAll(centerOfRotation).rotateAll(90).autoScaleAll(VectorList.AutoScaleMode.SCALE_LARGEST_UP_OR_DOWN, 1.0);;
-
-			calculateModuleVectors(translation, moduleRotationVectors, rotationSpeed);
-		} else {
-			if (fSharedInputValues.getBooleanRisingEdge(fFieldOrientedButton)) {
-				mFieldOriented = !mFieldOriented;
-			}
-
-			double xAxis = fSharedInputValues.getNumeric(fXAxis);
-			double yAxis = fSharedInputValues.getNumeric(fYAxis);
-			double rotateAxis = fSharedInputValues.getNumeric(fRotateAxis);
-
-			double robotOrientation = 0;
-
-			if (mFieldOriented) {
-				robotOrientation += -fSharedInputValues.getVector("ipv_navx").get("angle") + 90;
-			}
-
-			Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
-
-			calculateModuleVectors(translation, fModuleRotationDirections, rotateAxis);
+		if (fSharedInputValues.getBooleanRisingEdge(fFieldOrientedButton)) {
+			mFieldOriented = !mFieldOriented;
 		}
 
-		setMotorPowers(fCurrentModuleVectors);
+		double xAxis = fSharedInputValues.getNumeric(fXAxis);
+		double yAxis = fSharedInputValues.getNumeric(fYAxis);
+		double rotateAxis = fSharedInputValues.getNumeric(fRotateAxis);
+
+		// If using field orientation, calculate the robot's rotation based on the Navx
+		double robotOrientation = (mFieldOriented) ? (-fSharedInputValues.getVector("ipv_navx").get("angle") + 90) : 0;
+
+		//todo - why is point passed in as y, x
+		// Create a vector that represents the joysticks position. Then rotate that vector based on the robot's orientation
+		Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
+
+		// Loop through each wheel module and calculate it's new speed and angle
+		for(int i = 0; i < fCurrentModuleVectors.size(); i++){
+			Vector current = new Vector(fCurrentModuleVectors.get(i).magnitude(), fSharedInputValues.getNumeric(fModuleInputAngleNames.get(i)));
+			Vector target = new Vector(translation.add(fModuleRotationDirections.get(i).scale(rotateAxis)));
+
+			// If the driver let's off the joysticks, rotate the wheels to the straight forward position
+			if(target.magnitude() == 0.0) {
+				//target = new Vector(0, fModuleRotationDirections.get(i).angle());
+				target = new Vector(0, 0);
+			}
+
+			//todo why 3
+			double directionScalar = Math.pow(Math.cos(Math.toRadians(target.angle() - current.angle())), 3);
+
+			if (directionScalar < 0) {
+				target = target.rotate(180);
+			}
+
+			// Update the vector to be sent to the motors
+			fCurrentModuleVectors.set(i,target.scale(directionScalar));
+		}
+
+		// Scale all motor speed values so that the largest motor value does not exceed 1
+		fCurrentModuleVectors.autoScaleAll(VectorList.AutoScaleMode.SCALE_LARGEST_DOWN, 1.0);
+
+		// Output values to motors
+		for(int i = 0; i < fCurrentModuleVectors.size(); i++) {
+			fSharedOutputValues.setNumeric(fModuleOutputAngleNames.get(i), "percent", fCurrentModuleVectors.get(i).angle());
+			fSharedOutputValues.setNumeric(fModuleOutputSpeedNames.get(i), "percent", fCurrentModuleVectors.get(i).magnitude());
+			fSharedInputValues.setNumeric(fModuleInputSpeedNames.get(i), fCurrentModuleVectors.get(1).magnitude());
+		}
 	}
 
 	@Override
 	public void dispose() {
 		sLogger.trace("Leaving state {}", mStateName);
 
-		fCurrentModuleVectors.replaceAll(v -> new Vector());
-		setMotorPowers(fCurrentModuleVectors);
+		// Turn drive motors off. Leave wheels in their current positions
+		for(int i = 0; i < fCurrentModuleVectors.size(); i++) {
+//			fSharedOutputValues.setNumeric(fModuleOutputAngleNames.get(i), "percent", 0);
+			fSharedOutputValues.setNumeric(fModuleOutputSpeedNames.get(i), "percent", 0);
+			fSharedInputValues.setNumeric(fModuleInputSpeedNames.get(i), 0);
+		}
 	}
 
 	@Override
@@ -127,46 +175,5 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 	@Override
 	public Set<String> getSubsystems() {
 		return sSubsystems;
-	}
-
-	private void calculateModuleVectors(Vector translation, VectorList moduleRotationDirections, double rotationSpeed) {
-		fCurrentModuleVectors.replaceAll(v -> {
-			int i = fCurrentModuleVectors.indexOf(v);
-			return calculateModuleVector(fCurrentModuleVectors.get(i), fModuleAngleInputNames.get(i), translation, moduleRotationDirections.get(i), rotationSpeed);
-		});
-	}
-
-	private Vector calculateModuleVector(Vector last, String currentAngleInput, Vector translation, Vector rotationDirection, Double rotationScalar) {
-		Vector current = new Vector(last.magnitude(), fSharedInputValues.getNumeric(currentAngleInput));
-		Vector target = new Vector(translation.add(rotationDirection.scale(rotationScalar)));
-
-		if(target.magnitude() == 0.0) {
-			target = new Vector(0, rotationDirection.angle());
-		}
-
-		double directionScalar = Math.pow(Math.cos(Math.toRadians(target.angle() - current.angle())), 3);
-
-		if (directionScalar < 0) {
-			target = target.rotate(180);
-		}
-
-		return target.scale(directionScalar);
-	}
-
-	private void setMotorPowers(VectorList moduleVectors) {
-		moduleVectors.autoScaleAll(VectorList.AutoScaleMode.SCALE_LARGEST_DOWN, 1.0);
-
-		fSharedOutputValues.setNumeric("opn_drivetrain_front_right_speed", "percent", moduleVectors.get(0).magnitude());
-		fSharedOutputValues.setNumeric("opn_drivetrain_front_right_angle", "percent", moduleVectors.get(0).angle());
-		fSharedOutputValues.setNumeric("opn_drivetrain_front_left_speed", "percent", moduleVectors.get(1).magnitude());
-		fSharedOutputValues.setNumeric("opn_drivetrain_front_left_angle", "percent", moduleVectors.get(1).angle());
-		fSharedOutputValues.setNumeric("opn_drivetrain_back_left_speed", "percent", moduleVectors.get(2).magnitude());
-		fSharedOutputValues.setNumeric("opn_drivetrain_back_left_angle", "percent", moduleVectors.get(2).angle());
-		fSharedOutputValues.setNumeric("opn_drivetrain_back_right_speed", "percent", moduleVectors.get(3).magnitude());
-		fSharedOutputValues.setNumeric("opn_drivetrain_back_right_angle", "percent", moduleVectors.get(3).angle());
-		fSharedInputValues.setNumeric("ipn_drivetrain_front_right_speed", moduleVectors.get(0).magnitude());
-		fSharedInputValues.setNumeric("ipn_drivetrain_front_left_speed", moduleVectors.get(1).magnitude());
-		fSharedInputValues.setNumeric("ipn_drivetrain_back_left_speed", moduleVectors.get(2).magnitude());
-		fSharedInputValues.setNumeric("ipn_drivetrain_back_right_speed", moduleVectors.get(3).magnitude());
 	}
 }

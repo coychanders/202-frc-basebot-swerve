@@ -47,11 +47,15 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
 
+		//todo - why is right negitive?
+
+		// Read in the location of the four swerve modules relative to the center of the robot based on standard x,y grid
 		fModulePositions = new VectorList(new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_front_right_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_front_left_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_back_left_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_back_right_module_position")));
 
+		// Create a set of vectors at right angles to the corners of the robot to use to calculate rotation vectors
 		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
 
 		fCurrentModuleVectors = new VectorList(new Vector(), new Vector(), new Vector(), new Vector());
@@ -100,9 +104,13 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 			double robotOrientation = 0;
 
 			if (mFieldOriented) {
+				//todo why +=
+				//todo get ride negitive as the name does not imply negitive
 				robotOrientation += -fSharedInputValues.getVector("ipv_navx").get("angle") + 90;
 			}
 
+			//todo - add negitive to robotOrientaiton
+			//todo - why is point passed in as y, x
 			Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
 
 			calculateModuleVectors(translation, fModuleRotationDirections, rotateAxis);
@@ -142,6 +150,9 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 
 		if(target.magnitude() == 0.0) {
 			target = new Vector(0, rotationDirection.angle());
+
+			//todo - this will cause the wheels to face straight ahead when the opperator lets up on the joysticks
+			//target = new Vector(0, 0);
 		}
 
 		double directionScalar = Math.pow(Math.cos(Math.toRadians(target.angle() - current.angle())), 3);
