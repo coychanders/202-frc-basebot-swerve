@@ -49,10 +49,18 @@ global_drivetrain_swerve_vector:
   swerve_rotate: ipn_driver_right_x
   swerve_field_oriented_button: ipb_driver_start
   navx: ipv_navx
+#  swerve_front_right_module_position: [ 30.0, 20.0 ]
+#  swerve_front_left_module_position: [ -30.0, 20.0 ]
+#  swerve_back_left_module_position: [ -30.0, -20.0 ]
+#  swerve_back_right_module_position: [ 30.0, -20.0 ]
   swerve_front_right_module_position: [ 30.0, -20.0 ]
   swerve_front_left_module_position: [ 30.0, 20.0 ]
   swerve_back_left_module_position: [ -30.0, 20.0 ]
   swerve_back_right_module_position: [ -30.0, -20.0 ]
+  input_angle_names:  [ "ipn_drivetrain_front_right_angle", "ipn_drivetrain_front_left_angle", "ipn_drivetrain_back_left_angle", "ipn_drivetrain_back_right_angle"]
+  input_speed_names:  [ "ipn_drivetrain_front_right_speed", "ipn_drivetrain_front_left_speed", "ipn_drivetrain_back_left_speed", "ipn_drivetrain_back_right_speed"]
+  output_angle_names: [ "opn_drivetrain_front_right_angle", "opn_drivetrain_front_left_angle", "opn_drivetrain_back_left_angle", "opn_drivetrain_back_right_angle"]
+  output_speed_names: [ "opn_drivetrain_front_right_speed", "opn_drivetrain_front_left_speed", "opn_drivetrain_back_left_speed", "opn_drivetrain_back_right_speed"]
 
 global_drivetrain_Matthew:
   swerve_front_right_module_position: [ 30.0, -20.0 ]

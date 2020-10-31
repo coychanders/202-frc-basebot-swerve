@@ -44,8 +44,6 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 	private String mStateName;
 
-	private boolean mFieldOriented;
-
 	public Behavior_Drivetrain_Swerve_Vector(InputValues inputValues, OutputValues outputValues, Config config, RobotConfiguration robotConfiguration) {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
@@ -56,36 +54,22 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_left_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_right_module_position")));
 
+		// Rotate module positions clockwise 90 degrees to represent polar coordinance (0 degrees is to the right) instead of field coordinance (0 degrees is straight forward)
+//		fModulePositions.rotateAll(-90);
+
 		// ??? Rotate 90 degrees as the zero on the field is 90 degrees counterclockwise from zero on a unit circle
+//		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
 		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
 
 		fCurrentModuleVectors = new VectorList(new Vector(), new Vector(), new Vector(), new Vector());
 
-		fModuleInputAngleNames = Lists.of(
-				"ipn_drivetrain_front_right_angle",
-						"ipn_drivetrain_front_left_angle",
-						"ipn_drivetrain_back_left_angle",
-						"ipn_drivetrain_back_right_angle");
+		// Read in motor input and output names to be used in loops below
+		fModuleInputAngleNames  = robotConfiguration.getList("global_drivetrain_swerve_vector", "input_angle_names");
+		fModuleInputSpeedNames  = robotConfiguration.getList("global_drivetrain_swerve_vector", "input_speed_names");
+		fModuleOutputAngleNames = robotConfiguration.getList("global_drivetrain_swerve_vector", "output_angle_names");
+		fModuleOutputSpeedNames = robotConfiguration.getList("global_drivetrain_swerve_vector", "output_speed_names");
 
-		fModuleInputSpeedNames = Lists.of(
-				"ipn_drivetrain_front_right_speed",
-						"ipn_drivetrain_front_left_speed",
-						"ipn_drivetrain_back_left_speed",
-						"ipn_drivetrain_back_right_speed");
-
-		fModuleOutputAngleNames = Lists.of(
-				"opn_drivetrain_front_right_angle",
-						"opn_drivetrain_front_left_angle",
-						"opn_drivetrain_back_left_angle",
-						"opn_drivetrain_back_right_angle");
-
-		fModuleOutputSpeedNames = Lists.of(
-				"opn_drivetrain_front_right_speed",
-						"opn_drivetrain_front_left_speed",
-						"opn_drivetrain_back_left_speed",
-						"opn_drivetrain_back_right_speed");
-
-
+		// Read in the names of the xbox controls used
 		fXAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_x");
 		fYAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_y");
 		fRotateAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_rotate");
@@ -93,7 +77,7 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 		mStateName = "Unknown";
 
-		mFieldOriented = true;
+		fSharedInputValues.setBoolean("ipb_swerve_field_centric", true);
 	}
 
 	@Override
@@ -108,7 +92,7 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 	@Override
 	public void update() {
 		if (fSharedInputValues.getBooleanRisingEdge(fFieldOrientedButton)) {
-			mFieldOriented = !mFieldOriented;
+			fSharedInputValues.setBoolean("ipb_swerve_field_centric", !fSharedInputValues.getBoolean("ipb_swerve_field_centric"));
 		}
 
 		double xAxis = fSharedInputValues.getNumeric(fXAxis);
@@ -116,11 +100,10 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 		double rotateAxis = fSharedInputValues.getNumeric(fRotateAxis);
 
 		// If using field orientation, calculate the robot's rotation based on the Navx
-		double robotOrientation = (mFieldOriented) ? (-fSharedInputValues.getVector("ipv_navx").get("angle") + 90) : 0;
+		double robotOrientation = (fSharedInputValues.getBoolean("ipb_swerve_field_centric")) ? (fSharedInputValues.getVector("ipv_navx").get("angle") - 90) : 0;
 
-		//todo - why is point passed in as y, x
 		// Create a vector that represents the joysticks position. Then rotate that vector based on the robot's orientation
-		Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
+		Vector translation = new Vector(new Point(xAxis, yAxis)).rotate(robotOrientation);
 
 		// Loop through each wheel module and calculate it's new speed and angle
 		for(int i = 0; i < fCurrentModuleVectors.size(); i++){
@@ -129,8 +112,8 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 			// If the driver let's off the joysticks, rotate the wheels to the straight forward position
 			if(target.magnitude() == 0.0) {
-				//target = new Vector(0, fModuleRotationDirections.get(i).angle());
-				target = new Vector(0, 0);
+				target = new Vector(0, fModuleRotationDirections.get(i).angle());
+				//target = new Vector(0, 0);
 			}
 
 			//todo why 3
@@ -149,7 +132,8 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 		// Output values to motors
 		for(int i = 0; i < fCurrentModuleVectors.size(); i++) {
-			fSharedOutputValues.setNumeric(fModuleOutputAngleNames.get(i), "percent", fCurrentModuleVectors.get(i).angle());
+			//todo- profile?
+			fSharedOutputValues.setNumeric(fModuleOutputAngleNames.get(i), "position", fCurrentModuleVectors.get(i).angle());
 			fSharedOutputValues.setNumeric(fModuleOutputSpeedNames.get(i), "percent", fCurrentModuleVectors.get(i).magnitude());
 			fSharedInputValues.setNumeric(fModuleInputSpeedNames.get(i), fCurrentModuleVectors.get(1).magnitude());
 		}

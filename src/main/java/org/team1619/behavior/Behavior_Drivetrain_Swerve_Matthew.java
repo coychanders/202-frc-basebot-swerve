@@ -168,6 +168,7 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 		moduleVectors.autoScaleAll(VectorList.AutoScaleMode.SCALE_LARGEST_DOWN, 1.0);
 
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_right_speed", "percent", moduleVectors.get(0).magnitude());
+		// Todo - Position?
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_right_angle", "percent", moduleVectors.get(0).angle());
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_left_speed", "percent", moduleVectors.get(1).magnitude());
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_left_angle", "percent", moduleVectors.get(1).angle());

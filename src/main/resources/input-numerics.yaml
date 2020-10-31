@@ -11,7 +11,7 @@ controller_axis:
     axis: 2
     deadband: 0.15
     scale: 1.0
-    inverted: true
+    inverted: false
 
   ipn_driver_right_y:
     port: 0
@@ -25,7 +25,7 @@ controller_axis:
     axis: 4
     deadband: 0.15
     scale: 1.0
-    inverted: true
+    inverted: false
 
   #Do not scale this axis here (it is being used in multiple places)
   ipn_operator_left_y:
