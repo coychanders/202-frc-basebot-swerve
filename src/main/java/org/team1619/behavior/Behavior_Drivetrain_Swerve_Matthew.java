@@ -17,7 +17,7 @@ import java.util.Set;
 
 
 /**
- * Drives the robot in percent mode, based on the joystick values.
+ * Drives the robot in swerve mode, based on the joystick values.
  */
 
 public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
@@ -41,15 +41,11 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 
 	private String mStateName;
 
-	private boolean mFieldOriented;
-
 	public Behavior_Drivetrain_Swerve_Matthew(InputValues inputValues, OutputValues outputValues, Config config, RobotConfiguration robotConfiguration) {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
 
-		//todo - why is right negitive?
-
-		// Read in the location of the four swerve modules relative to the center of the robot based on standard x,y grid
+		// Read in the location of the four swerve modules relative to the center of the robot based on standard x,y grid with the front facing 0 on the unit circle
 		fModulePositions = new VectorList(new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_front_right_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_front_left_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_Matthew", "swerve_back_left_module_position")),
@@ -70,7 +66,7 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 
 		mStateName = "Unknown";
 
-		mFieldOriented = true;
+		fSharedInputValues.setBoolean("ipb_swerve_field_centric", true);
 	}
 
 	@Override
@@ -94,23 +90,30 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 			calculateModuleVectors(translation, moduleRotationVectors, rotationSpeed);
 		} else {
 			if (fSharedInputValues.getBooleanRisingEdge(fFieldOrientedButton)) {
-				mFieldOriented = !mFieldOriented;
+				fSharedInputValues.setBoolean("ipb_swerve_field_centric", !fSharedInputValues.getBoolean("ipb_swerve_field_centric"));
 			}
 
 			double xAxis = fSharedInputValues.getNumeric(fXAxis);
 			double yAxis = fSharedInputValues.getNumeric(fYAxis);
 			double rotateAxis = fSharedInputValues.getNumeric(fRotateAxis);
 
+			// This is the orientation of the front of the robot based on the unit circle. It does not have to be 0.
 			double robotOrientation = 0;
 
-			if (mFieldOriented) {
-				//todo why +=
-				//Why negitive navx
-				robotOrientation += -fSharedInputValues.getVector("ipv_navx").get("angle") + 90;
+			// When using field orientation, forward is always towards the opposite end of the field even if the robot is facing a different direction.
+			// To do this, the angle of the robot read from the navx is subtracted from the direction chosen by the driver.
+			// For example, if the robot is rotated 15 degrees and the driver chooses straight forward, the actual angle is -15 degrees.
+			if (fSharedInputValues.getBoolean("ipb_swerve_field_centric")) {
+				robotOrientation += -fSharedInputValues.getVector("ipv_navx").get("angle");
 			}
 
-			//todo - add negitive to robotOrientaiton
-			//todo - why is point passed in as y, x
+			// Add 90 degrees to point up on the simulation page so it makes more sense.
+			// This will be removed on the robot.
+			robotOrientation += 90;
+
+			// Swapping X and Y translates coordinate systems from the controller to the robot.
+			// The controller use the Y axis for forward/backwards and the X axis for right/left
+			// The robot forward/backwards is along the X axis and left/right is along the Y axis
 			Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
 
 			calculateModuleVectors(translation, fModuleRotationDirections, rotateAxis);
@@ -124,6 +127,7 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 		sLogger.trace("Leaving state {}", mStateName);
 
 		fCurrentModuleVectors.replaceAll(v -> new Vector());
+
 		setMotorPowers(fCurrentModuleVectors);
 	}
 
@@ -149,12 +153,13 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 		Vector target = new Vector(translation.add(rotationDirection.scale(rotationScalar)));
 
 		if(target.magnitude() == 0.0) {
+			// When the joysticks are idle, move the wheel angles to their rotation angle so the robot can spin instantly and move in any direction as quickly as possible.
 			target = new Vector(0, rotationDirection.angle());
-
-			//todo - this will cause the wheels to face straight ahead when the opperator lets up on the joysticks
-			//target = new Vector(0, 0);
 		}
 
+		// If the difference between the target angle and the actual angle is more than 90 degrees, rotate 180 degrees and reverse the motor direction.
+		// Ramp up the wheel velocity as the actual angle get closer to the target angle. This prevents the robot from being pulled off course.
+		// The cosine is raised to the power of 3 so that the ramp increases faster as the delta in the angle approaches zero.
 		double directionScalar = Math.pow(Math.cos(Math.toRadians(target.angle() - current.angle())), 3);
 
 		if (directionScalar < 0) {
@@ -168,7 +173,7 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 		moduleVectors.autoScaleAll(VectorList.AutoScaleMode.SCALE_LARGEST_DOWN, 1.0);
 
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_right_speed", "percent", moduleVectors.get(0).magnitude());
-		// Todo - Position?
+		//todo - should this be position and have a profile?
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_right_angle", "percent", moduleVectors.get(0).angle());
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_left_speed", "percent", moduleVectors.get(1).magnitude());
 		fSharedOutputValues.setNumeric("opn_drivetrain_front_left_angle", "percent", moduleVectors.get(1).angle());

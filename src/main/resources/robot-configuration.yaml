@@ -67,7 +67,7 @@ global_drivetrain_Matthew:
   swerve_x: ipn_driver_left_x
   swerve_y: ipn_driver_left_y
   swerve_rotate: ipn_driver_right_x
-  swerve_field_oriented_button: ipb_driver_right_stick_button
+  swerve_field_oriented_button: ipb_driver_start
 
 
 log:
