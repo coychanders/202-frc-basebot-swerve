@@ -111,7 +111,7 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 		}
 
 		// Swapping X and Y translates coordinate systems from the controller to the robot.
-		// The controler use the Y axis for forward/backwards and the X axis for right/left
+		// The controller use the Y axis for forward/backwards and the X axis for right/left
 		// The robot forward/backwards is along the X axis and left/right is along the Y axis
 		Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
 
