@@ -49,10 +49,7 @@ global_drivetrain_swerve_vector:
   swerve_rotate: ipn_driver_right_x
   swerve_field_oriented_button: ipb_driver_start
   navx: ipv_navx
-#  swerve_front_right_module_position: [ 30.0, 20.0 ]
-#  swerve_front_left_module_position: [ -30.0, 20.0 ]
-#  swerve_back_left_module_position: [ -30.0, -20.0 ]
-#  swerve_back_right_module_position: [ 30.0, -20.0 ]
+  # The robot is centered on the x,y axis with the front of the robot pointing towards 0 on the unit circle
   swerve_front_right_module_position: [ 30.0, -20.0 ]
   swerve_front_left_module_position: [ 30.0, 20.0 ]
   swerve_back_left_module_position: [ -30.0, 20.0 ]

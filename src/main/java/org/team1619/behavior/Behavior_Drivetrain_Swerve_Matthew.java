@@ -105,7 +105,7 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 
 			if (mFieldOriented) {
 				//todo why +=
-				//todo get ride negitive as the name does not imply negitive
+				//Why negitive navx
 				robotOrientation += -fSharedInputValues.getVector("ipv_navx").get("angle") + 90;
 			}
 

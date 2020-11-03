@@ -54,11 +54,8 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_left_module_position")),
 				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_right_module_position")));
 
-		// Rotate module positions clockwise 90 degrees to represent polar coordinance (0 degrees is to the right) instead of field coordinance (0 degrees is straight forward)
-//		fModulePositions.rotateAll(-90);
 
-		// ??? Rotate 90 degrees as the zero on the field is 90 degrees counterclockwise from zero on a unit circle
-//		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
+		// Create a set of vectors to use in calculating rotation by rotating each module vector by 90 degrees
 		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
 
 		fCurrentModuleVectors = new VectorList(new Vector(), new Vector(), new Vector(), new Vector());
@@ -99,24 +96,40 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 		double yAxis = fSharedInputValues.getNumeric(fYAxis);
 		double rotateAxis = fSharedInputValues.getNumeric(fRotateAxis);
 
-		// If using field orientation, calculate the robot's rotation based on the Navx
-		double robotOrientation = (fSharedInputValues.getBoolean("ipb_swerve_field_centric")) ? (fSharedInputValues.getVector("ipv_navx").get("angle") - 90) : 0;
+		// This is the orientation of the front of the robot based on the unit circle. It does not have to be 0.
+		double robotOrientation = 0;
 
-		// Create a vector that represents the joysticks position. Then rotate that vector based on the robot's orientation
-		Vector translation = new Vector(new Point(xAxis, yAxis)).rotate(robotOrientation);
+		if(fSharedInputValues.getBoolean("ipb_swerve_field_centric")) {
+			// When using field orientation, forward is always towards the opposite end of the field even if the robot is facing a different direction.
+			// To do this, the angle of the robot read from the navx is subtracted from the direction chosen by the driver.
+			// For example, if the robot is rotated 15 degrees and the driver chooses straight forward, the actual angle is -15 degrees.
+			robotOrientation += -fSharedInputValues.getVector("ipv_navx").get("angle");
+
+			// Add 90 degrees to point up on the simulation page so it makes more sense.
+			// This will be removed on the robot.
+			robotOrientation += 90;
+		}
+
+		// Swapping X and Y translates coordinate systems from the controller to the robot.
+		// The controler use the Y axis for forward/backwards and the X axis for right/left
+		// The robot forward/backwards is along the X axis and left/right is along the Y axis
+		Vector translation = new Vector(new Point(yAxis, xAxis)).rotate(robotOrientation);
 
 		// Loop through each wheel module and calculate it's new speed and angle
 		for(int i = 0; i < fCurrentModuleVectors.size(); i++){
+			// The current vector uses the actual wheel angle read in from the encoders
 			Vector current = new Vector(fCurrentModuleVectors.get(i).magnitude(), fSharedInputValues.getNumeric(fModuleInputAngleNames.get(i)));
+			// The target vector is the combination of the direction vector and the rotation vector
 			Vector target = new Vector(translation.add(fModuleRotationDirections.get(i).scale(rotateAxis)));
 
-			// If the driver let's off the joysticks, rotate the wheels to the straight forward position
+			// When the joysticks are idle, move the wheel angles to their rotation angle so the robot can spin instantly and move in any direction as quickly as possible.
 			if(target.magnitude() == 0.0) {
 				target = new Vector(0, fModuleRotationDirections.get(i).angle());
-				//target = new Vector(0, 0);
 			}
 
-			//todo why 3
+			// If the difference between the target angle and the actual angle is more than 90 degrees, rotate 180 degrees and reverse the motor direction.
+			// Ramp up the wheel velocity as the actual angle get closer to the target angle. This prevents the robot from being pulled off course.
+			// The cosine is raised to the power of 3 so that the ramp increases faster as the delta in the angle approaches zero.
 			double directionScalar = Math.pow(Math.cos(Math.toRadians(target.angle() - current.angle())), 3);
 
 			if (directionScalar < 0) {
@@ -145,7 +158,8 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 		// Turn drive motors off. Leave wheels in their current positions
 		for(int i = 0; i < fCurrentModuleVectors.size(); i++) {
-//			fSharedOutputValues.setNumeric(fModuleOutputAngleNames.get(i), "percent", 0);
+			//todo - position and profile?
+			fSharedOutputValues.setNumeric(fModuleOutputAngleNames.get(i), "percent", 0);
 			fSharedOutputValues.setNumeric(fModuleOutputSpeedNames.get(i), "percent", 0);
 			fSharedInputValues.setNumeric(fModuleInputSpeedNames.get(i), 0);
 		}
