@@ -71,7 +71,8 @@ public class Behavior_Drivetrain_Swerve_Math implements Behavior {
 
 		// Get heading from the Navx
 		fNavxValues = fSharedInputValues.getVector(fNavx);
-		double heading = fNavxValues.getOrDefault("angle", 0.0) - 90;
+		double heading = fNavxValues.getOrDefault("angle", 0.0);
+		// Subtract 90 degrees from heading to rotate the field so forward on the joystick is up on the screen
 		fSharedInputValues.setNumeric("opn_swerve_navx_heading", heading);
 
 		// Field centric steering - adjust joysticks based on Navx heading

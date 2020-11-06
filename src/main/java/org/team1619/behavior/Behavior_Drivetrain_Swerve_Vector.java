@@ -12,6 +12,7 @@ import org.uacr.utilities.purepursuit.Point;
 import org.uacr.utilities.purepursuit.Vector;
 import org.uacr.utilities.purepursuit.VectorList;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -44,16 +45,17 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 	private String mStateName;
 
+
 	public Behavior_Drivetrain_Swerve_Vector(InputValues inputValues, OutputValues outputValues, Config config, RobotConfiguration robotConfiguration) {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
 
 		// Read in the location of the four swerve modules relative to the center of the robot based on standard x,y grid
-		fModulePositions = new VectorList(new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_front_right_module_position")),
-				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_front_left_module_position")),
-				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_left_module_position")),
-				new Vector(robotConfiguration.getList("global_drivetrain_swerve_vector", "swerve_back_right_module_position")));
-
+		List<List<Double>> modulePositionsList = robotConfiguration.getList("global_drivetrain_swerve_vector", "module_positions");
+		fModulePositions = new VectorList();
+		for(List<Double> d : modulePositionsList){
+			fModulePositions.add(new Vector(d));
+		}
 
 		// Create a set of vectors to use in calculating rotation by rotating each module vector by 90 degrees
 		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
@@ -107,7 +109,7 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 
 			// Add 90 degrees to point up on the simulation page so it makes more sense.
 			// This will be removed on the robot.
-			robotOrientation += 90;
+			// robotOrientation += 90;
 		}
 
 		// Swapping X and Y translates coordinate systems from the controller to the robot.

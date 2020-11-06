@@ -109,7 +109,7 @@ public class Behavior_Drivetrain_Swerve_Matthew implements Behavior {
 
 			// Add 90 degrees to point up on the simulation page so it makes more sense.
 			// This will be removed on the robot.
-			robotOrientation += 90;
+			// robotOrientation += 90;
 
 			// Swapping X and Y translates coordinate systems from the controller to the robot.
 			// The controller use the Y axis for forward/backwards and the X axis for right/left
