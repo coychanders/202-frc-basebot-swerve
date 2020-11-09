@@ -5,14 +5,12 @@ import org.uacr.shared.abstractions.InputValues;
 import org.uacr.shared.abstractions.OutputValues;
 import org.uacr.shared.abstractions.RobotConfiguration;
 import org.uacr.utilities.Config;
-import org.uacr.utilities.Lists;
 import org.uacr.utilities.logging.LogManager;
 import org.uacr.utilities.logging.Logger;
 import org.uacr.utilities.purepursuit.Point;
 import org.uacr.utilities.purepursuit.Vector;
 import org.uacr.utilities.purepursuit.VectorList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +27,6 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 	private final InputValues fSharedInputValues;
 	private final OutputValues fSharedOutputValues;
 
-	private final VectorList fModulePositions;
 	private final VectorList fModuleRotationDirections;
 	private final VectorList fCurrentModuleVectors;
 
@@ -49,24 +46,7 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 	public Behavior_Drivetrain_Swerve_Vector(InputValues inputValues, OutputValues outputValues, Config config, RobotConfiguration robotConfiguration) {
 		fSharedInputValues = inputValues;
 		fSharedOutputValues = outputValues;
-
-		// Read in the location of the four swerve modules relative to the center of the robot based on standard x,y grid
-		List<List<Double>> modulePositionsList = robotConfiguration.getList("global_drivetrain_swerve_vector", "module_positions");
-		fModulePositions = new VectorList();
-		for(List<Double> d : modulePositionsList){
-			fModulePositions.add(new Vector(d));
-		}
-
-		// Create a set of vectors to use in calculating rotation by rotating each module vector by 90 degrees
-		fModuleRotationDirections = fModulePositions.copy().normalizeAll().rotateAll(90);
-
-		fCurrentModuleVectors = new VectorList(new Vector(), new Vector(), new Vector(), new Vector());
-
-		// Read in motor input and output names to be used in loops below
-		fModuleInputAngleNames  = robotConfiguration.getList("global_drivetrain_swerve_vector", "input_angle_names");
-		fModuleInputSpeedNames  = robotConfiguration.getList("global_drivetrain_swerve_vector", "input_speed_names");
-		fModuleOutputAngleNames = robotConfiguration.getList("global_drivetrain_swerve_vector", "output_angle_names");
-		fModuleOutputSpeedNames = robotConfiguration.getList("global_drivetrain_swerve_vector", "output_speed_names");
+		mStateName = "Unknown";
 
 		// Read in the names of the xbox controls used
 		fXAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_x");
@@ -74,7 +54,21 @@ public class Behavior_Drivetrain_Swerve_Vector implements Behavior {
 		fRotateAxis = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_rotate");
 		fFieldOrientedButton = robotConfiguration.getString("global_drivetrain_swerve_vector", "swerve_field_oriented_button");
 
-		mStateName = "Unknown";
+		// Read in motor input and output names to be used in loops below
+		fModuleInputAngleNames  = robotConfiguration.getList("global_drivetrain_swerve_vector", "input_angle_names");
+		fModuleInputSpeedNames  = robotConfiguration.getList("global_drivetrain_swerve_vector", "input_speed_names");
+		fModuleOutputAngleNames = robotConfiguration.getList("global_drivetrain_swerve_vector", "output_angle_names");
+		fModuleOutputSpeedNames = robotConfiguration.getList("global_drivetrain_swerve_vector", "output_speed_names");
+
+		// Read in the location of the  swerve modules. The center of the robot is at 0,0 on the x,y Cartesian graph with the front of the robot pointing to the right along the x axis.
+		VectorList modulePositions = new VectorList();
+		((List<List<Double>>) robotConfiguration.getList("global_drivetrain_swerve_vector", "module_positions")).stream().map(Vector::new).forEach(modulePositions::add);
+
+		// Create a set of vectors to use in calculating rotation by rotating each module vector by 90 degrees
+		fModuleRotationDirections = modulePositions.copy().normalizeAll().rotateAll(90);
+
+		// This holds the calculated vectors sent to the motors
+		fCurrentModuleVectors = new VectorList(new Vector(), new Vector(), new Vector(), new Vector());
 
 		fSharedInputValues.setBoolean("ipb_swerve_field_centric", true);
 	}
